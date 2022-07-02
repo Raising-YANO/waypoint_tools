@@ -31,6 +31,11 @@ def listener():
     global path
     rospy.init_node('waypoint_manager', anonymous=True)
     wp_dir=rospy.get_param('~wp_dir')
+
+    offset_x=rospy.get_param('~offset_x')
+    offset_y=rospy.get_param('~offset_y')
+    offset_z=rospy.get_param('~offset_z')
+        
     predata=pd.read_csv(wp_dir+'wpdata.csv')
     # get timestamp
     from datetime import datetime as dt
@@ -40,7 +45,7 @@ def listener():
     predata.drop(predata.columns[[0]], axis=1,inplace=True)
     predata.to_csv(wp_dir+'wpdata'+tstr+".csv")
 
-    df=pd.DataFrame(columns=['x', 'y','z','qx','qy','qz','qw','type','map'])
+    df=pd.DataFrame(columns=['x', 'y','z','qx','qy','qz','qw','type','map', 'offset_x', 'offset_y', 'offset_z'])
 
     rospy.Subscriber("/map_num", Int32, mapcallback)
     rospy.Subscriber("waypoint/path",Path,pathcallback)
@@ -49,7 +54,10 @@ def listener():
 
     i=0
     for j in path.poses:
-        df.loc[i] = [j.pose.position.x,j.pose.position.y,j.pose.position.z,j.pose.orientation.x,j.pose.orientation.y,j.pose.orientation.z,j.pose.orientation.w,1,1]
+        if i==0:
+            df.loc[i] = [j.pose.position.x,j.pose.position.y,j.pose.position.z,j.pose.orientation.x,j.pose.orientation.y,j.pose.orientation.z,j.pose.orientation.w,1,1, offset_x, offset_y, offset_z]
+        else:
+            df.loc[i] = [j.pose.position.x,j.pose.position.y,j.pose.position.z,j.pose.orientation.x,j.pose.orientation.y,j.pose.orientation.z,j.pose.orientation.w,1,1, "", "", ""]
         df.to_csv(wp_dir+'wpdata.csv', header=True)
         i+=1
     print(" WayPoint SAVED!!")
